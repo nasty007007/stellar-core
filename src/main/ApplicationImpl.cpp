@@ -134,7 +134,8 @@ ApplicationImpl::initialize()
     mBanManager = BanManager::create(*this);
     mStatusManager = std::make_unique<StatusManager>();
     mLedgerTxnRoot = std::make_unique<LedgerTxnRoot>(
-        *mDatabase, mConfig.ENTRY_CACHE_SIZE, mConfig.BEST_OFFERS_CACHE_SIZE);
+        *mDatabase, mConfig.ENTRY_CACHE_SIZE, mConfig.BEST_OFFERS_CACHE_SIZE,
+        mConfig.PREFETCH_BATCH_SIZE);
 
     BucketListIsConsistentWithDatabase::registerInvariant(*this);
     AccountSubEntriesCountIsValid::registerInvariant(*this);
@@ -738,7 +739,7 @@ ApplicationImpl::postOnMainThread(std::function<void()>&& f,
 {
     LogSlowExecution isSlow{std::move(jobName), LogSlowExecution::Mode::MANUAL,
                             "executed after"};
-    mVirtualClock.postToCurrentCrank([ this, f = std::move(f), isSlow ]() {
+    mVirtualClock.postToCurrentCrank([this, f = std::move(f), isSlow]() {
         mPostOnMainThreadDelay.Update(isSlow.checkElapsedTime());
         f();
     });
@@ -750,7 +751,7 @@ ApplicationImpl::postOnMainThreadWithDelay(std::function<void()>&& f,
 {
     LogSlowExecution isSlow{std::move(jobName), LogSlowExecution::Mode::MANUAL,
                             "executed after"};
-    mVirtualClock.postToNextCrank([ this, f = std::move(f), isSlow ]() {
+    mVirtualClock.postToNextCrank([this, f = std::move(f), isSlow]() {
         mPostOnMainThreadWithDelayDelay.Update(isSlow.checkElapsedTime());
         f();
     });
